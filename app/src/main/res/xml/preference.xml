@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+
+    <PreferenceCategory>
+
+        <EditTextPreference
+            android:dialogTitle="Salário Bruto (R$)"
+            android:inputType="numberDecimal"
+            android:key="edittext_salario"
+            android:summary="Clique para informar o salário bruto"
+            android:title="Salário Bruto" />
+
+        <EditTextPreference
+            android:dialogTitle="Horas Normais"
+            android:inputType="numberDecimal"
+            android:key="edittext_horas_normais"
+            android:summary="Clique para informar as horas normais"
+            android:title="Horas Normais" />
+
+        <EditTextPreference
+            android:dialogTitle="Adicional (%)"
+            android:inputType="numberDecimal"
+            android:key="edittext_adicional"
+            android:summary="Clique para informar a porcentagem adicional por hora extra"
+            android:title="Adicional (%)" />
+
+    </PreferenceCategory>
+
+
+</PreferenceScreen>

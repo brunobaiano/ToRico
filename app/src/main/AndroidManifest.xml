@@ -16,6 +16,15 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".SettingsActivity"
+            android:label="Configurações" >
+        </activity>
+
+        <service
+            android:name=".services.ToRicoService"
+            android:exported="false" >
+        </service>
     </application>
 
 </manifest>
