@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Binder;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
@@ -14,6 +15,7 @@ import android.os.RemoteException;
 import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.brunobaiano.torico.MainActivity;
 
@@ -57,13 +59,27 @@ public class ToRicoService extends Service {
         Log.d("TORICO SERVICE", "DESTROY");
     }
 
+    /**
+     * When binding to the service, we return an interface to our messenger
+     * for sending messages to the service.
+     */
     @Override
     public IBinder onBind(Intent intent) {
-        return mBinder;
+        return mMessenger.getBinder();
     }
 
-    /** method for clients */
-    public long getRandomNumber() {
-        return (System.nanoTime() - start)/1000;
+    class IncomingHandler extends Handler {
+        @Override
+        public void handleMessage(Message msg) {
+
+            Bundle data = msg.getData();
+            String dataString = data.getString("MyString");
+            Toast.makeText(getApplicationContext(),
+                    dataString, Toast.LENGTH_SHORT).show();
+        }
     }
+
+    final Messenger mMessenger = new Messenger(new IncomingHandler());
+
+
 }

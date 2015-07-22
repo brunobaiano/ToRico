@@ -9,6 +9,9 @@ import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.IBinder;
+import android.os.Message;
+import android.os.Messenger;
+import android.os.RemoteException;
 import android.os.SystemClock;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
@@ -34,7 +37,11 @@ import java.util.Formatter;
 
 public class MainActivity extends AppCompatActivity implements ServiceConnection {
     ToRicoService mService;
+
+    Messenger myService = null;
+
     boolean mBound = false;
+    long timeWhenStopped = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -83,25 +90,49 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
     public void iniciarServico(View view)
     {
         Chronometer cron = (Chronometer) findViewById(R.id.chronometer);
-        cron.setBase(SystemClock.elapsedRealtime());
+        cron.setBase(SystemClock.elapsedRealtime()+ timeWhenStopped);
         cron.start();
      if (mBound) {
-         long num = mService.getRandomNumber();
-         SimpleDateFormat df2 = new SimpleDateFormat("hh:mm:ss");
-
-         Toast.makeText(this, "time: " + df2.format( new Date(num)), Toast.LENGTH_SHORT).show();
+         sendMessage(view);
      }
     }
 
+    public void sendMessage(View view)
+    {
+        if (!mBound) return;
+
+        Message msg = Message.obtain();
+
+        Bundle bundle = new Bundle();
+        bundle.putString("MyString", "Message Received");
+
+        msg.setData(bundle);
+
+        try {
+            myService.send(msg);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void pausarServico(View view)
+    {
+        Chronometer cron = (Chronometer) findViewById(R.id.chronometer);
+        timeWhenStopped = cron.getBase() - SystemClock.elapsedRealtime();
+        cron.stop();
+    }
     public void pararServico(View view)
     {
         Chronometer cron = (Chronometer) findViewById(R.id.chronometer);
         cron.stop();
+        timeWhenStopped = 0;
+
     }
 
     @Override
     protected void onStop() {
         super.onStop();
+
 
         if (mBound) {
             unbindService(this);
@@ -117,13 +148,16 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
     @Override
     public void onServiceConnected(ComponentName name, IBinder service) {
 // We've bound to LocalService, cast the IBinder and get LocalService instance
-        ToRicoService.LocalBinder binder = (ToRicoService.LocalBinder) service;
-        mService = binder.getService();
+       // ToRicoService.LocalBinder binder = (ToRicoService.LocalBinder) service;
+        //mService = binder.getService();
+        myService = new Messenger(service);
+
         mBound = true;
     }
 
     @Override
     public void onServiceDisconnected(ComponentName name) {
+        myService = null;
         mBound = false;
     }
 }
