@@ -17,11 +17,11 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.brunobaiano.torico.MainActivity;
 
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.TimeUnit;
 
 /**
  * An {@link IntentService} subclass for handling asynchronous task requests in
@@ -33,6 +33,10 @@ import java.util.TimerTask;
 public class ToRicoService extends Service {
     // Binder given to clients
     private final IBinder mBinder = new LocalBinder();
+
+    //  final Messenger mMessenger = new Messenger(new IncomingHandler()); // Target we publish for clients to send messages to IncomingHandler.
+
+    final Messenger mMessenger = new Messenger(new IncomingHandler());
 
     long start;
     /**
@@ -73,13 +77,35 @@ public class ToRicoService extends Service {
         public void handleMessage(Message msg) {
 
             Bundle data = msg.getData();
-            String dataString = data.getString("MyString");
-            Toast.makeText(getApplicationContext(),
-                    dataString, Toast.LENGTH_SHORT).show();
+            long time = data.getLong("time");
+            Log.d("TORICO SERVICE", "long: " + TimeUnit.MILLISECONDS.toSeconds(time));
+
+            enviarResposta(msg.replyTo, time);
+
         }
     }
 
-    final Messenger mMessenger = new Messenger(new IncomingHandler());
+    private void enviarResposta(Messenger replyTo, long time) {
+        // pegar valores nas preferências
+        SharedPreferences prefs =  PreferenceManager.getDefaultSharedPreferences(this);
+        double salario = Double.parseDouble(prefs.getString("edittext_salario", "0"));
+        long horas_normais = Long.parseLong(prefs.getString("edittext_horas_normais", "1"));
+        double adicional = Double.parseDouble(prefs.getString("edittext_adicional", "1"));
+
+        // valor do salario em milisegundos
+        double salarioPorSegundo = salario/TimeUnit.HOURS.toSeconds(horas_normais);
+        //Send data as a String
+        Bundle b = new Bundle();
+        b.putString("valor", salarioPorSegundo* TimeUnit.MILLISECONDS.toSeconds(time) + "");
+        //cria uma nova msg pra ser enviada de volta com os cálculos
+        Message msgEnviada = new Message();
+        msgEnviada.setData(b);
+        try {
+            replyTo.send(msgEnviada);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+    }
 
 
 }

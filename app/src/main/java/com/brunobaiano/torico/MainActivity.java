@@ -8,6 +8,7 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.net.Uri;
+import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
@@ -43,6 +44,17 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
     boolean mBound = false;
     long timeWhenStopped = 0;
 
+    //resposta???
+    final Messenger mMessenger = new Messenger(new IncomingHandler());
+
+    class IncomingHandler extends Handler {
+        @Override
+        public void handleMessage(Message msg) {
+            TextView valorAtual = (TextView) findViewById(R.id.valor_atual);
+            valorAtual.setText(msg.getData().getString("valor"));
+        }
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -52,6 +64,15 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
 // Starts the IntentService
         bindService(servico, this, Context.BIND_AUTO_CREATE);
         mBound = true;
+
+        Chronometer cron = (Chronometer) findViewById(R.id.chronometer);
+        cron.setOnChronometerTickListener(new Chronometer.OnChronometerTickListener() {
+            @Override
+            public void onChronometerTick(Chronometer chronometer) {
+                long time = SystemClock.elapsedRealtime() - chronometer.getBase();
+                sendMessage(time);
+            }
+        });
     }
 
     @Override
@@ -90,21 +111,20 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
     public void iniciarServico(View view)
     {
         Chronometer cron = (Chronometer) findViewById(R.id.chronometer);
-        cron.setBase(SystemClock.elapsedRealtime()+ timeWhenStopped);
+        cron.setBase(SystemClock.elapsedRealtime() + timeWhenStopped);
         cron.start();
-     if (mBound) {
-         sendMessage(view);
-     }
     }
 
-    public void sendMessage(View view)
+
+
+    public void sendMessage(long time)
     {
         if (!mBound) return;
 
         Message msg = Message.obtain();
-
+        msg.replyTo = mMessenger;
         Bundle bundle = new Bundle();
-        bundle.putString("MyString", "Message Received");
+        bundle.putLong("time", time);
 
         msg.setData(bundle);
 
